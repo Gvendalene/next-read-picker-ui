@@ -1,19 +1,55 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Upload, CheckCircle, FileText } from 'lucide-react';
+import { Upload, CheckCircle, FileText, BookOpen } from 'lucide-react';
 import HowToExport from './HowToExport';
+import { parseGoodreadsCSV, Book } from '@/utils/csvParser';
+import { toast } from '@/components/ui/use-toast';
 
 const UploadSection = () => {
   const [csvUploaded, setCsvUploaded] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
+  const [books, setBooks] = useState<Book[]>([]);
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  const processFile = async (file: File) => {
+    if (!file.type.includes('csv') && !file.name.endsWith('.csv')) {
+      toast({
+        title: "Invalid file type",
+        description: "Please upload a CSV file from Goodreads.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsProcessing(true);
+    
+    try {
+      const parsedBooks = await parseGoodreadsCSV(file);
+      setBooks(parsedBooks);
+      setCsvUploaded(true);
+      
+      toast({
+        title: "Success!",
+        description: `Successfully loaded ${parsedBooks.length} books from your TBR.`
+      });
+    } catch (error) {
+      console.error('Error parsing CSV:', error);
+      toast({
+        title: "Error parsing file",
+        description: "Please make sure you uploaded a valid Goodreads CSV export.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file && file.type === 'text/csv') {
-      setCsvUploaded(true);
-      console.log('CSV file uploaded:', file.name);
+    if (file) {
+      processFile(file);
     }
   };
 
@@ -32,9 +68,8 @@ const UploadSection = () => {
     setIsDragOver(false);
     
     const files = e.dataTransfer.files;
-    if (files.length > 0 && files[0].type === 'text/csv') {
-      setCsvUploaded(true);
-      console.log('CSV file uploaded:', files[0].name);
+    if (files.length > 0) {
+      processFile(files[0]);
     }
   };
 
@@ -55,6 +90,7 @@ const UploadSection = () => {
           onChange={handleFileUpload}
           className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
           id="csv-upload"
+          disabled={isProcessing}
         />
         
         <div className={`
@@ -70,8 +106,22 @@ const UploadSection = () => {
             {csvUploaded ? (
               <div className="animate-fade-in">
                 <CheckCircle className="w-12 h-12 text-green-500 mx-auto animate-scale-in" />
-                <h3 className="text-lg font-semibold text-green-700">File Uploaded!</h3>
+                <h3 className="text-lg font-semibold text-green-700">
+                  {books.length} Books Loaded!
+                </h3>
                 <p className="text-green-600">Your TBR is ready to explore</p>
+                <div className="flex items-center justify-center gap-2 mt-2">
+                  <BookOpen className="w-4 h-4 text-green-600" />
+                  <span className="text-sm text-green-600">
+                    {books.filter(book => book.bookshelf === 'to-read').length} books to read
+                  </span>
+                </div>
+              </div>
+            ) : isProcessing ? (
+              <div className="animate-fade-in">
+                <div className="w-12 h-12 mx-auto border-4 border-blue-200 border-t-blue-500 rounded-full animate-spin"></div>
+                <h3 className="text-lg font-semibold text-gray-700">Processing...</h3>
+                <p className="text-gray-500">Reading your TBR list</p>
               </div>
             ) : (
               <div className="animate-fade-in">
@@ -109,7 +159,7 @@ const UploadSection = () => {
             ? 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white transform hover:scale-105 shadow-lg hover:shadow-xl'
             : 'bg-gray-200 text-gray-400 cursor-not-allowed'
         }`}
-        disabled={!csvUploaded}
+        disabled={!csvUploaded || isProcessing}
       >
         {csvUploaded ? '🚀 Continue to My Shelf' : '📚 Continue to My Shelf'}
       </Button>
