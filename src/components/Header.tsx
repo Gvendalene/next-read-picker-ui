@@ -6,7 +6,7 @@ const Header = () => {
     <div className="text-center mb-16">
       <div className="animate-fade-in">
         <h1 className="text-7xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 mb-6 animate-scale-in">
-          📚 Next Read
+          📚 Next Read test
         </h1>
         <div className="relative">
           <p className="text-xl text-gray-600 max-w-lg mx-auto leading-relaxed animate-fade-in">
