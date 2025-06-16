@@ -1,5 +1,5 @@
-
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Upload, CheckCircle, FileText, BookOpen } from 'lucide-react';
 import HowToExport from './HowToExport';
@@ -7,6 +7,7 @@ import { parseGoodreadsCSV, Book } from '@/utils/csvParser';
 import { toast } from '@/components/ui/use-toast';
 
 const UploadSection = () => {
+  const navigate = useNavigate();
   const [csvUploaded, setCsvUploaded] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
@@ -73,9 +74,13 @@ const UploadSection = () => {
     }
   };
 
+  const handleContinueToShelf = () => {
+    // In a real app, you'd pass the books data via context or state management
+    navigate('/shelf');
+  };
+
   return (
     <div className="max-w-lg mx-auto space-y-8">
-      {/* Dynamic Upload Area */}
       <div 
         className={`relative transition-all duration-300 ${
           isDragOver ? 'scale-105' : 'scale-100'
@@ -140,7 +145,6 @@ const UploadSection = () => {
         </div>
       </div>
 
-      {/* Help Link with Icon */}
       <div className="text-center">
         <button
           onClick={() => setShowModal(true)}
@@ -151,9 +155,9 @@ const UploadSection = () => {
         </button>
       </div>
 
-      {/* Continue Button with Enhanced Animation */}
       <Button
         size="lg"
+        onClick={handleContinueToShelf}
         className={`w-full py-4 px-8 text-lg font-medium transition-all duration-300 ${
           csvUploaded
             ? 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white transform hover:scale-105 shadow-lg hover:shadow-xl'
@@ -164,7 +168,6 @@ const UploadSection = () => {
         {csvUploaded ? '🚀 Continue to My Shelf' : '📚 Continue to My Shelf'}
       </Button>
 
-      {/* Success Message with Animation */}
       {csvUploaded && (
         <div className="text-center animate-fade-in">
           <div className="inline-flex items-center gap-2 bg-green-100 text-green-700 px-4 py-2 rounded-full">
