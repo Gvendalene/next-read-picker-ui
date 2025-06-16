@@ -5,8 +5,11 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card, CardContent } from '@/components/ui/card';
-import { Search, Shuffle, Book, Star, Calendar } from 'lucide-react';
+import { Search, Shuffle, Book, Star, Calendar, Upload } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { Book as BookType } from '@/utils/csvParser';
+import RandomReadModal from '@/components/RandomReadModal';
+import { toast } from '@/components/ui/use-toast';
 
 // Mock data for now - in real app this would come from props or context
 const mockBooks: BookType[] = [
@@ -76,6 +79,43 @@ const Shelf = () => {
     setRandomBook(books[randomIndex]);
   };
 
+  const handleMarkAsStarted = () => {
+    if (randomBook) {
+      toast({
+        title: "Book marked as started!",
+        description: `"${randomBook.title}" has been added to your currently reading list.`
+      });
+      setRandomBook(null);
+    }
+  };
+
+  const handlePickAnother = () => {
+    handleRandomRead();
+  };
+
+  // Empty state when no books
+  if (books.length === 0) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+        <div className="container mx-auto px-4 py-16">
+          <div className="max-w-md mx-auto text-center">
+            <Book className="w-24 h-24 text-gray-300 mx-auto mb-6" />
+            <h2 className="text-2xl font-bold text-gray-700 mb-4">No Books Yet!</h2>
+            <p className="text-gray-500 mb-8">
+              Upload your Goodreads TBR to start discovering your next great read.
+            </p>
+            <Link to="/">
+              <Button className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white">
+                <Upload className="w-4 h-4 mr-2" />
+                Upload Your TBR
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
       <div className="container mx-auto px-4 py-8">
@@ -121,31 +161,6 @@ const Shelf = () => {
           </Button>
         </div>
 
-        {/* Random Book Modal */}
-        {randomBook && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <Card className="max-w-md w-full animate-scale-in">
-              <CardContent className="p-6 text-center">
-                <h3 className="text-2xl font-bold mb-2">🎲 Your Random Pick!</h3>
-                <div className="bg-gradient-to-br from-purple-100 to-pink-100 p-4 rounded-lg mb-4">
-                  <h4 className="text-lg font-semibold text-gray-800">{randomBook.title}</h4>
-                  <p className="text-gray-600">by {randomBook.author}</p>
-                  <div className="flex items-center justify-center gap-2 mt-2">
-                    <Star className="w-4 h-4 text-yellow-500 fill-current" />
-                    <span className="text-sm">{randomBook.averageRating}</span>
-                  </div>
-                </div>
-                <Button 
-                  onClick={() => setRandomBook(null)}
-                  className="w-full"
-                >
-                  Close
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
-        )}
-
         {/* Books Grid */}
         <ScrollArea className="h-[calc(100vh-400px)]">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -181,13 +196,31 @@ const Shelf = () => {
             ))}
           </div>
           
-          {sortedBooks.length === 0 && (
+          {/* No books found state */}
+          {sortedBooks.length === 0 && searchQuery && (
             <div className="text-center py-12">
               <Book className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500">No books found matching your search.</p>
+              <h3 className="text-lg font-semibold text-gray-600 mb-2">No books found</h3>
+              <p className="text-gray-500 mb-4">
+                No books match your search for "{searchQuery}"
+              </p>
+              <Button 
+                variant="outline" 
+                onClick={() => setSearchQuery('')}
+              >
+                Reset Search
+              </Button>
             </div>
           )}
         </ScrollArea>
+
+        {/* Random Read Modal */}
+        <RandomReadModal
+          book={randomBook}
+          onClose={() => setRandomBook(null)}
+          onPickAnother={handlePickAnother}
+          onMarkAsStarted={handleMarkAsStarted}
+        />
       </div>
     </div>
   );
